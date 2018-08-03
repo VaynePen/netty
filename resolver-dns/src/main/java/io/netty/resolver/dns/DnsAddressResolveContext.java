@@ -29,11 +29,14 @@ import io.netty.handler.codec.dns.DnsRecordType;
 final class DnsAddressResolveContext extends DnsResolveContext<InetAddress> {
 
     private final DnsCache resolveCache;
+    private final AuthoritativeDnsServerCache authoritativeDnsServerCache;
 
     DnsAddressResolveContext(DnsNameResolver parent, String hostname, DnsRecord[] additionals,
-                             DnsServerAddressStream nameServerAddrs, DnsCache resolveCache) {
+                             DnsServerAddressStream nameServerAddrs, DnsCache resolveCache,
+                             AuthoritativeDnsServerCache authoritativeDnsServerCache) {
         super(parent, hostname, DnsRecord.CLASS_IN, parent.resolveRecordTypes(), additionals, nameServerAddrs);
         this.resolveCache = resolveCache;
+        this.authoritativeDnsServerCache = authoritativeDnsServerCache;
     }
 
     @Override
@@ -41,7 +44,8 @@ final class DnsAddressResolveContext extends DnsResolveContext<InetAddress> {
                                                       int dnsClass, DnsRecordType[] expectedTypes,
                                                       DnsRecord[] additionals,
                                                       DnsServerAddressStream nameServerAddrs) {
-        return new DnsAddressResolveContext(parent, hostname, additionals, nameServerAddrs, resolveCache);
+        return new DnsAddressResolveContext(parent, hostname, additionals, nameServerAddrs, resolveCache,
+                authoritativeDnsServerCache);
     }
 
     @Override
@@ -83,5 +87,15 @@ final class DnsAddressResolveContext extends DnsResolveContext<InetAddress> {
     @Override
     void cache(String hostname, DnsRecord[] additionals, UnknownHostException cause) {
         resolveCache.cache(hostname, additionals, cause, parent.ch.eventLoop());
+    }
+
+    @Override
+    protected DnsCache resolveCache() {
+        return resolveCache;
+    }
+
+    @Override
+    protected AuthoritativeDnsServerCache authoritativeDnsServerCache() {
+        return authoritativeDnsServerCache;
     }
 }
